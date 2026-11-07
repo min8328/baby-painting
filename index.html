@@ -22,6 +22,17 @@
       height: 100dvh;
       width: 100%;
       overflow: hidden;
+      background: #f6e7cf;
+    }
+    .app:fullscreen,
+    .app:-webkit-full-screen {
+      background: #f6e7cf;
+      width: 100%;
+      height: 100%;
+    }
+    .app:fullscreen::backdrop,
+    .app:-webkit-full-screen::backdrop {
+      background: #f6e7cf;
     }
     .sheet { min-height: 0; flex: 1; padding: 16px 16px 8px; }
     .frame {
@@ -61,10 +72,9 @@
       height: 144px;
       opacity: 0;
       pointer-events: none;
-      filter: drop-shadow(0 2px 0 #fffdf8);
+      filter: drop-shadow(0 2px 1px rgba(42, 33, 24, 0.35));
     }
     .palette { display: flex; flex-direction: column; gap: 12px; padding: 8px 24px 20px; }
-    .fs-error { margin: 0; text-align: center; color: #9a3412; font-size: 18px; }
     .palette-row { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
     .color-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; width: 100%; order: 1; }
     .tool-grid { display: grid; grid-template-columns: repeat(4, 68px); gap: 8px; order: 2; }
@@ -99,16 +109,61 @@
     .tool svg { width: 28px; height: 28px; }
     .tool.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
     .tool:disabled { opacity: 0.45; }
+    .tool .brush-thumb { width: 46px; height: 46px; }
+    .brush-thumb.off { display: none !important; }
+    .tool.holding { transform: scale(0.94); }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(42, 33, 24, 0.45);
+    }
+    .modal[hidden] { display: none; }
+    .modal-card {
+      width: min(920px, 100%);
+      max-height: min(82dvh, 760px);
+      overflow: auto;
+      padding: 16px;
+      border-radius: 24px;
+      background: #fffdf8;
+    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .modal-head h2 { margin: 0; font-size: 28px; font-weight: 400; }
+    .modal-close {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #f6e7cf;
+      font-size: 24px;
+    }
+    .template-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .template-grid button {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border: 3px solid #efd3a4;
+      border-radius: 16px;
+      background: #fff;
+    }
+    .template-grid svg { width: 100%; height: 92px; }
+    .template-grid span { font-size: 16px; }
+    @media (max-width: 700px) {
+      .template-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
     .app.is-fullscreen, .app.is-fullscreen * { cursor: none !important; }
     @media (min-width: 900px) {
       .palette-row { flex-direction: row; }
-      .color-grid { order: 0; grid-template-columns: repeat(9, minmax(0, 1fr)); min-width: 0; flex: 1; }
+      .color-grid { order: 0; grid-template-columns: repeat(10, minmax(0, 1fr)); min-width: 0; flex: 1; }
       .tool-grid { order: 0; grid-template-columns: repeat(2, 68px); }
     }
     .app[data-layout="mobile-landscape"] .sheet { padding: 8px 8px 4px; }
     .app[data-layout="mobile-landscape"] .palette { padding: 4px 10px 8px; }
     .app[data-layout="mobile-landscape"] .palette-row { flex-direction: row; align-items: center; gap: 8px; }
-    .app[data-layout="mobile-landscape"] .color-grid { order: 0; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
+    .app[data-layout="mobile-landscape"] .color-grid { order: 0; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
     .app[data-layout="mobile-landscape"] .swatch {
       width: min(100%, 20vh);
       height: min(100%, 20vh);
@@ -119,18 +174,32 @@
     .app[data-layout="mobile-landscape"] .tool-grid { order: 0; grid-template-columns: repeat(2, 42px); gap: 4px; }
     .app[data-layout="mobile-landscape"] .tool { width: 42px; height: 42px; border-radius: 12px; }
     .app[data-layout="mobile-landscape"] .tool svg { width: 20px; height: 20px; }
+    .app[data-layout="mobile-landscape"] .tool .brush-thumb { width: 30px; height: 30px; }
   </style>
 </head>
 <body>
   <div id="app" class="app">
-    <svg id="brush" class="brush" viewBox="0 0 104 104" aria-hidden="true">
-      <path d="M22 90c-10-16 0-32 18-30 1 12-2 22-8 30-3 3-8 3-10 0z" fill="#fffdf8" stroke="#2a2118" stroke-width="5" stroke-linejoin="round"></path>
-      <path id="brush-tip" d="M26 84c-6-12 2-22 14-20 1 8-1 15-5 21-3 2-7 1-9-1z" fill="#FF2B2B" stroke="#2a2118" stroke-width="3.5" stroke-linejoin="round"></path>
-      <path d="M34 62l16-14 12 12-16 14z" fill="#f4f7fb" stroke="#2a2118" stroke-width="5" stroke-linejoin="round"></path>
-      <path d="M40 56l6 6" stroke="#c5ccd6" stroke-width="3" stroke-linecap="round"></path>
-      <path d="M48 52c14-14 32-28 44-34 4 7-4 24-18 38-8 7-18 6-26-4z" fill="#f0a04a" stroke="#2a2118" stroke-width="5" stroke-linejoin="round"></path>
-      <path d="M72 28c8 3 14 8 16 12" fill="none" stroke="#ffe6bf" stroke-width="4" stroke-linecap="round"></path>
-      <circle cx="84" cy="26" r="3.5" fill="#fff8ea" stroke="#2a2118" stroke-width="2"></circle>
+    <svg id="brush" class="brush" viewBox="0 0 128 128" aria-hidden="true">
+      <defs>
+        <g id="marker-art" transform="rotate(-43 18 116)">
+          <path fill="#1a1a1a" d="M18 116 L34 109 H46 V104 H106 Q118 104 118 116 Q118 128 106 128 H46 V123 H34 Z"></path>
+          <path class="brush-color" fill="#FF2B2B" d="M23 116 L33 111 V121 Z"></path>
+          <path class="brush-color" fill="#FF2B2B" d="M31 111 H44 V121 H31 Z"></path>
+          <path fill="#4a4a4a" d="M40 110 H50 V122 H40 Z"></path>
+          <path class="brush-color" fill="#FF2B2B" d="M52 108 H100 V124 H52 Z"></path>
+          <path fill="#5c5c5c" d="M96 108 H106 Q114 108 114 116 Q114 124 106 124 H96 Z"></path>
+        </g>
+        <g id="paint-art" transform="rotate(-43 18 116)">
+          <path fill="#1a1a1a" d="M18 116 C28 110 40 104 54 107 C64 109 70 112 70 116 C70 122 62 130 48 130 C34 130 26 122 18 116 Z"></path>
+          <path fill="#1a1a1a" d="M62 107 H82 V125 H62 Z"></path>
+          <path fill="#1a1a1a" d="M76 107 L114 110 Q126 112 126 116 Q126 120 114 122 L76 125 Z"></path>
+          <path fill="#E07A32" d="M80 110 L112 112.5 Q120 114 120 116 Q120 118 112 119.5 L80 122 Z"></path>
+          <path fill="#6184DB" d="M66 110 H78 V122 H66 Z"></path>
+          <path class="brush-color" fill="#FF2B2B" d="M24 116 C32 111 44 107 56 110 C64 112 65 114 65 116 C65 121 58 126 48 126 C36 126 28 121 24 116 Z"></path>
+        </g>
+      </defs>
+      <g id="brush-thin"><use href="#marker-art"></use></g>
+      <g id="brush-wide" style="display:none"><use href="#paint-art"></use></g>
     </svg>
     <div class="sheet">
       <div id="frame" class="frame">
@@ -139,25 +208,206 @@
       </div>
     </div>
     <footer class="palette">
-      <p id="fs-error" class="fs-error" hidden></p>
       <div class="palette-row">
         <div id="colors" class="color-grid" role="group" aria-label="색"></div>
         <div class="tool-grid" role="group" aria-label="도구">
           <button id="undo" class="tool" type="button" aria-label="되돌리기" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg>
           </button>
-          <button id="clear" class="tool" type="button" aria-label="지우기">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path></svg>
+          <button id="brush-mode" class="tool" type="button" aria-label="굵은 붓" aria-pressed="false">
+            <svg class="brush-thumb thin off" viewBox="12 33 92 92" aria-hidden="true"><use href="#marker-art"></use></svg>
+            <svg class="brush-thumb wide" viewBox="12 33 92 92" aria-hidden="true"><use href="#paint-art"></use></svg>
           </button>
-          <button id="save" class="tool" type="button" aria-label="그림 저장">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="m7 10 5 5 5-5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+          <button id="new-paper" class="tool" type="button" aria-label="새 종이. 길게 누르면 그림 저장">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h9l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path><path d="M14 3v6h6"></path></svg>
           </button>
-          <button id="fullscreen" class="tool primary" type="button" aria-label="전체 화면">
-            <svg id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+          <button id="templates-button" class="tool" type="button" aria-label="템플릿. 길게 누르면 전체 화면">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="7.2" height="7.2" rx="2.3"></rect>
+              <rect x="13.8" y="3" width="7.2" height="7.2" rx="2.3"></rect>
+              <rect x="3" y="13.8" width="7.2" height="7.2" rx="2.3"></rect>
+              <rect x="13.8" y="13.8" width="7.2" height="7.2" rx="2.3"></rect>
+            </svg>
           </button>
         </div>
       </div>
     </footer>
+    <div id="template-modal" class="modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="template-title">
+        <div class="modal-head">
+          <h2 id="template-title">Templates</h2>
+          <button id="template-close" class="modal-close" type="button" aria-label="닫기">×</button>
+        </div>
+        <div id="template-grid" class="template-grid"><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <path d="M392 230 C360 150 378 48 448 62 C490 72 478 160 462 236"/>
+  <path d="M608 230 C640 150 622 48 552 62 C510 72 522 160 538 236"/>
+  <path d="M418 214 C404 150 424 100 452 108 C470 150 462 190 456 220" stroke-width="12"/>
+  <path d="M582 214 C596 150 576 100 548 108 C530 150 538 190 544 220" stroke-width="12"/>
+  <circle cx="500" cy="400" r="200"/>
+  <circle cx="420" cy="380" r="34"/>
+  <circle cx="580" cy="380" r="34"/>
+  <circle cx="432" cy="390" r="14" fill="#2A2118" stroke="none"/>
+  <circle cx="592" cy="390" r="14" fill="#2A2118" stroke="none"/>
+  <path d="M500 438 L470 474 L530 474 Z"/>
+  <path d="M500 474 V524"/>
+  <path d="M430 540 Q500 600 570 540"/>
+  <path d="M468 524 H532 V568 H468 Z" stroke-width="12"/>
+  <path d="M500 524 V568" stroke-width="12"/>
+  <circle cx="330" cy="470" r="32" stroke-width="12"/>
+  <circle cx="670" cy="470" r="32" stroke-width="12"/>
+</svg></span><span>토끼</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <path d="M360 250 L300 78 L470 210"/>
+  <path d="M640 250 L700 78 L530 210"/>
+  <path d="M385 230 L350 120 L445 205" stroke-width="12"/>
+  <path d="M615 230 L650 120 L555 205" stroke-width="12"/>
+  <circle cx="500" cy="390" r="200"/>
+  <ellipse cx="420" cy="370" rx="36" ry="46"/>
+  <ellipse cx="580" cy="370" rx="36" ry="46"/>
+  <circle cx="428" cy="384" r="14" fill="#2A2118" stroke="none"/>
+  <circle cx="588" cy="384" r="14" fill="#2A2118" stroke="none"/>
+  <path d="M500 430 L474 462 L526 462 Z"/>
+  <path d="M500 462 V500"/>
+  <path d="M460 512 Q500 548 540 512"/>
+  <path d="M250 400 H400" stroke-width="10"/>
+  <path d="M250 440 H400" stroke-width="10"/>
+  <path d="M250 480 H405" stroke-width="10"/>
+  <path d="M750 400 H600" stroke-width="10"/>
+  <path d="M750 440 H600" stroke-width="10"/>
+  <path d="M750 480 H595" stroke-width="10"/>
+  <path d="M430 560 Q500 610 570 560" stroke-width="12"/>
+</svg></span><span>고양이</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <path d="M455 220 L500 85 L545 220" stroke-width="14"/>
+  <path d="M478 205 L500 125 L522 205" stroke-width="12"/>
+  <ellipse cx="500" cy="390" rx="210" ry="190"/>
+  <ellipse cx="300" cy="400" rx="62" ry="42" transform="rotate(-18 300 400)"/>
+  <ellipse cx="700" cy="400" rx="62" ry="42" transform="rotate(18 700 400)"/>
+  <circle cx="430" cy="350" r="30"/>
+  <circle cx="570" cy="350" r="30"/>
+  <circle cx="440" cy="358" r="12" fill="#2A2118" stroke="none"/>
+  <circle cx="580" cy="358" r="12" fill="#2A2118" stroke="none"/>
+  <path d="M455 430 L500 490 L545 430 Z"/>
+  <path d="M500 490 V530" stroke-width="12"/>
+  <path d="M430 560 L390 640"/>
+  <path d="M430 560 L470 640"/>
+  <path d="M430 560 L430 645"/>
+  <path d="M570 560 L530 640"/>
+  <path d="M570 560 L610 640"/>
+  <path d="M570 560 L570 645"/>
+</svg></span><span>병아리</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <ellipse cx="460" cy="360" rx="250" ry="160"/>
+  <path d="M690 360 L860 200 L800 360 L860 520 Z"/>
+  <path d="M400 210 L470 90 L540 210"/>
+  <path d="M430 500 L490 620 L550 500"/>
+  <path d="M360 220 C410 360 410 360 370 500" stroke-width="14"/>
+  <circle cx="280" cy="330" r="42"/>
+  <circle cx="292" cy="338" r="16" fill="#2A2118" stroke="none"/>
+  <path d="M230 400 Q280 450 340 400" stroke-width="14"/>
+  <circle cx="160" cy="180" r="28" stroke-width="12"/>
+  <circle cx="210" cy="120" r="16" stroke-width="12"/>
+  <circle cx="120" cy="120" r="12" stroke-width="10"/>
+  <circle cx="830" cy="100" r="24" stroke-width="12"/>
+  <circle cx="890" cy="150" r="15" stroke-width="12"/>
+  <circle cx="770" cy="155" r="11" stroke-width="10"/>
+  <circle cx="130" cy="540" r="26" stroke-width="12"/>
+  <circle cx="195" cy="590" r="15" stroke-width="12"/>
+  <circle cx="78" cy="595" r="11" stroke-width="10"/>
+</svg></span><span>물고기</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <path d="M470 250 C300 70 120 170 190 340 C240 470 400 430 470 340 Z"/>
+  <path d="M530 250 C700 70 880 170 810 340 C760 470 600 430 530 340 Z"/>
+  <path d="M470 360 C330 340 200 460 270 590 C360 670 470 560 485 430 Z"/>
+  <path d="M530 360 C670 340 800 460 730 590 C640 670 530 560 515 430 Z"/>
+  <circle cx="330" cy="260" r="42"/>
+  <circle cx="670" cy="260" r="42"/>
+  <circle cx="360" cy="500" r="30"/>
+  <circle cx="640" cy="500" r="30"/>
+  <ellipse cx="500" cy="280" rx="32" ry="55"/>
+  <ellipse cx="500" cy="430" rx="38" ry="80"/>
+  <path d="M478 230 C450 160 410 130 380 100" stroke-width="12"/>
+  <circle cx="372" cy="92" r="14" stroke-width="12"/>
+  <path d="M522 230 C550 160 590 130 620 100" stroke-width="12"/>
+  <circle cx="628" cy="92" r="14" stroke-width="12"/>
+  <circle cx="500" cy="270" r="8" fill="#2A2118" stroke="none"/>
+  <circle cx="500" cy="310" r="8" fill="#2A2118" stroke="none"/>
+</svg></span><span>나비</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <ellipse cx="500" cy="150" rx="58" ry="78"/>
+  <ellipse cx="500" cy="390" rx="58" ry="78"/>
+  <ellipse cx="360" cy="270" rx="78" ry="58"/>
+  <ellipse cx="640" cy="270" rx="78" ry="58"/>
+  <ellipse cx="400" cy="175" rx="58" ry="74" transform="rotate(-40 400 175)"/>
+  <ellipse cx="600" cy="175" rx="58" ry="74" transform="rotate(40 600 175)"/>
+  <ellipse cx="400" cy="365" rx="58" ry="74" transform="rotate(40 400 365)"/>
+  <ellipse cx="600" cy="365" rx="58" ry="74" transform="rotate(-40 600 365)"/>
+  <circle cx="500" cy="270" r="78"/>
+  <circle cx="500" cy="270" r="36" stroke-width="12"/>
+  <path d="M500 468 V575" stroke-width="16"/>
+  <path d="M498 495 C450 440 330 455 325 525 C400 555 470 535 498 505 Z"/>
+  <path d="M502 505 C560 445 680 470 680 535 C600 565 530 545 502 515 Z"/>
+  <path d="M360 560 H640 L600 660 H400 Z"/>
+  <path d="M430 560 V640" stroke-width="12"/>
+  <path d="M500 560 V650" stroke-width="12"/>
+  <path d="M570 560 V640" stroke-width="12"/>
+</svg></span><span>꽃</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <circle cx="170" cy="130" r="46"/>
+  <path d="M170 62 V46 M170 198 V214 M102 130 H86 M238 130 H254" stroke-width="12"/>
+  <path d="M122 82 L108 68 M218 82 L232 68 M122 178 L108 192 M218 178 L232 192" stroke-width="12"/>
+  <path d="M150 520
+    H235
+    C250 520 255 420 325 420
+    C395 420 400 520 415 520
+    H590
+    C605 520 610 420 680 420
+    C750 420 755 520 770 520
+    H890
+    V370
+    H790
+    L700 255
+    H410
+    L330 360
+    H210
+    L165 450
+    H150
+    Z"/>
+  <path d="M430 295 H650 L690 360 H430 Z"/>
+  <path d="M545 295 V360" stroke-width="14"/>
+  <circle cx="220" cy="400" r="16" stroke-width="12"/>
+  <circle cx="325" cy="530" r="62"/>
+  <circle cx="325" cy="530" r="24"/>
+  <circle cx="680" cy="530" r="62"/>
+  <circle cx="680" cy="530" r="24"/>
+  <path d="M70 620 H930" stroke-width="14"/>
+  <path d="M110 655 H250 M380 655 H540 M670 655 H830" stroke-width="12"/>
+</svg></span><span>자동차</span></button><button type="button"><span class="thumb"><svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none" stroke="#2A2118" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="26" width="948" height="648" rx="32" stroke-width="12"/>
+  <circle cx="820" cy="140" r="52"/>
+  <circle cx="802" cy="132" r="6" fill="#2A2118" stroke="none"/>
+  <circle cx="838" cy="132" r="6" fill="#2A2118" stroke="none"/>
+  <path d="M804 156 Q820 170 836 156" stroke-width="10"/>
+  <path d="M820 70 V48 M820 210 V232 M748 140 H726 M892 140 H914" stroke-width="12"/>
+  <path d="M768 88 L752 72 M872 88 L888 72 M768 192 L752 208 M872 192 L888 208" stroke-width="12"/>
+  <rect x="600" y="168" width="48" height="100" stroke-width="14"/>
+  <path d="M210 340 L470 130 L730 340"/>
+  <rect x="250" y="330" width="440" height="270" stroke-width="16"/>
+  <rect x="410" y="450" width="110" height="150"/>
+  <circle cx="498" cy="530" r="7" fill="#2A2118" stroke="none"/>
+  <rect x="290" y="380" width="90" height="90"/>
+  <path d="M335 380 V470 M290 425 H380" stroke-width="12"/>
+  <rect x="560" y="380" width="90" height="90"/>
+  <path d="M605 380 V470 M560 425 H650" stroke-width="12"/>
+  <rect x="108" y="455" width="36" height="145" stroke-width="14"/>
+  <circle cx="96" cy="455" r="42"/>
+  <circle cx="156" cy="468" r="38"/>
+  <circle cx="126" cy="400" r="62"/>
+  <path d="M70 600 H930" stroke-width="14"/>
+</svg></span><span>집</span></button></div>
+      </div>
+    </div>
   </div>
   <script>
     const BRUSH_DIAMETER = 20;
@@ -173,6 +423,7 @@
       { id: "blue", name: "파랑", hex: "#2F6BFF" },
       { id: "navy", name: "남색", hex: "#1B2A7A" },
       { id: "purple", name: "보라", hex: "#8B3DFF" },
+      { id: "pink", name: "분홍", hex: "#FF4FA3" },
       { id: "black", name: "검정", hex: "#1A1A1A" },
       { id: "white", name: "하양", hex: "#FFFFFF" }
     ];
@@ -182,13 +433,15 @@
     const canvas = document.getElementById("paint");
     const dot = document.getElementById("dot");
     const brush = document.getElementById("brush");
-    const brushTip = document.getElementById("brush-tip");
     const undoButton = document.getElementById("undo");
-    const fsError = document.getElementById("fs-error");
-    const fsButton = document.getElementById("fullscreen");
+    const newPaperButton = document.getElementById("new-paper");
+    const templatesButton = document.getElementById("templates-button");
+    const templateModal = document.getElementById("template-modal");
 
-    const state = { image: null, undo: [] };
+    const state = { image: null, lines: null, undo: [] };
+    let lineCanvas = null;
     let color = COLORS[0];
+    let thick = false;
     let drawing = false;
     let lastPoint = null;
     let raf = 0;
@@ -227,6 +480,29 @@
       if (maxX < 0) return null;
       return { minX, minY, maxX, maxY, width: maxX - minX + 1, height: maxY - minY + 1 };
     }
+    function contentBoundsAlpha(data, width, height) {
+      let minX = width, minY = height, maxX = -1, maxY = -1;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          if (data[(y * width + x) * 4 + 3] === 0) continue;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (maxX < 0) return null;
+      return { minX, minY, maxX, maxY, width: maxX - minX + 1, height: maxY - minY + 1 };
+    }
+    function unionBounds(a, b) {
+      if (!a) return b;
+      if (!b) return a;
+      const minX = Math.min(a.minX, b.minX);
+      const minY = Math.min(a.minY, b.minY);
+      const maxX = Math.max(a.maxX, b.maxX);
+      const maxY = Math.max(a.maxY, b.maxY);
+      return { minX, minY, maxX, maxY, width: maxX - minX + 1, height: maxY - minY + 1 };
+    }
     function fitPaper(bounds, sourceWidth, sourceHeight, destWidth, destHeight) {
       if (!bounds) return { scale: 1, offsetX: (destWidth - sourceWidth) / 2, offsetY: (destHeight - sourceHeight) / 2 };
       const scale = Math.min(1, destWidth / bounds.width, destHeight / bounds.height);
@@ -234,9 +510,9 @@
       const centerY = (bounds.minY + bounds.maxY + 1) / 2;
       return { scale, offsetX: destWidth / 2 - centerX * scale, offsetY: destHeight / 2 - centerY * scale };
     }
-    function resamplePaper(source, sourceWidth, sourceHeight, destWidth, destHeight, fit) {
+    function resamplePaper(source, sourceWidth, sourceHeight, destWidth, destHeight, fit, keepAlpha) {
       const dest = new Uint8ClampedArray(destWidth * destHeight * 4);
-      fillBuffer(dest);
+      if (!keepAlpha) fillBuffer(dest);
       for (let y = 0; y < destHeight; y++) {
         const sy = Math.round((y + 0.5 - fit.offsetY) / fit.scale - 0.5);
         if (sy < 0 || sy >= sourceHeight) continue;
@@ -244,8 +520,10 @@
           const sx = Math.round((x + 0.5 - fit.offsetX) / fit.scale - 0.5);
           if (sx < 0 || sx >= sourceWidth) continue;
           const si = (sy * sourceWidth + sx) * 4;
+          if (keepAlpha && source[si + 3] === 0) continue;
           const di = (y * destWidth + x) * 4;
-          dest[di] = source[si]; dest[di + 1] = source[si + 1]; dest[di + 2] = source[si + 2]; dest[di + 3] = 255;
+          dest[di] = source[si]; dest[di + 1] = source[si + 1]; dest[di + 2] = source[si + 2];
+          dest[di + 3] = keepAlpha ? source[si + 3] : 255;
         }
       }
       return dest;
@@ -276,13 +554,40 @@
         stampCircle(data, width, height, x0 + dx * t, y0 + dy * t, radius, rgb);
       }
     }
-    function brushDiameter() { return mobile ? BRUSH_DIAMETER / 2 : BRUSH_DIAMETER; }
+    function brushDiameter() {
+      const base = mobile ? BRUSH_DIAMETER / 2 : BRUSH_DIAMETER;
+      return thick ? base * 2.5 : base;
+    }
+    function brushTipOffset() {
+      const scale = 144 / 128;
+      return { x: 18 * scale, y: 116 * scale };
+    }
+    function syncBrushMode() {
+      document.getElementById("brush-thin").style.display = thick ? "none" : "";
+      document.getElementById("brush-wide").style.display = thick ? "" : "none";
+      document.querySelector("#brush-mode .thin").classList.toggle("off", !thick);
+      document.querySelector("#brush-mode .wide").classList.toggle("off", thick);
+      const brushMode = document.getElementById("brush-mode");
+      brushMode.setAttribute("aria-pressed", thick ? "true" : "false");
+      brushMode.setAttribute("aria-label", thick ? "얇은 붓" : "굵은 붓");
+    }
     function radius() {
       const image = state.image;
       if (!image) return brushDiameter() / 2;
       const display = canvas.getBoundingClientRect().width;
       if (display <= 0) return brushDiameter() / 2;
       return (brushDiameter() / 2) * (image.width / display);
+    }
+    function syncLineCanvas() {
+      const image = state.image;
+      if (!image || !state.lines || state.lines.length !== image.width * image.height * 4) {
+        lineCanvas = null;
+        return;
+      }
+      if (!lineCanvas) lineCanvas = document.createElement("canvas");
+      lineCanvas.width = image.width;
+      lineCanvas.height = image.height;
+      lineCanvas.getContext("2d").putImageData(new ImageData(state.lines, image.width, image.height), 0, 0);
     }
     function blit() {
       const image = state.image;
@@ -293,6 +598,15 @@
         canvas.height = image.height;
       }
       ctx.putImageData(image, 0, 0);
+      if (lineCanvas && lineCanvas.width === image.width && lineCanvas.height === image.height) {
+        ctx.drawImage(lineCanvas, 0, 0);
+      }
+    }
+    function remember() {
+      if (!state.image) return;
+      state.undo.push({ paint: state.image.data.slice(), lines: state.lines });
+      if (state.undo.length > MAX_UNDO) state.undo.shift();
+      undoButton.disabled = false;
     }
     function resizeToFrame() {
       const width = Math.max(1, Math.round(frame.clientWidth));
@@ -301,13 +615,21 @@
       if (current && current.width === width && current.height === height) return;
       const next = new ImageData(width, height);
       fillBuffer(next.data);
+      let nextLines = null;
       if (current && mobile) {
-        const bounds = contentBounds(current.data, current.width, current.height);
+        const bounds = unionBounds(
+          contentBounds(current.data, current.width, current.height),
+          state.lines ? contentBoundsAlpha(state.lines, current.width, current.height) : null
+        );
         const fit = fitPaper(bounds, current.width, current.height, width, height);
         next.data.set(resamplePaper(current.data, current.width, current.height, width, height, fit));
+        if (state.lines) nextLines = resamplePaper(state.lines, current.width, current.height, width, height, fit, true);
         state.undo = state.undo.flatMap((snapshot) => {
-          if (snapshot.length !== current.width * current.height * 4) return [];
-          return [resamplePaper(snapshot, current.width, current.height, width, height, fit)];
+          if (!snapshot.paint || snapshot.paint.length !== current.width * current.height * 4) return [];
+          return [{
+            paint: resamplePaper(snapshot.paint, current.width, current.height, width, height, fit),
+            lines: snapshot.lines ? resamplePaper(snapshot.lines, current.width, current.height, width, height, fit, true) : null
+          }];
         });
       } else if (current) {
         const source = document.createElement("canvas");
@@ -321,15 +643,28 @@
         destCtx.imageSmoothingEnabled = false;
         destCtx.drawImage(source, 0, 0, width, height);
         next.data.set(destCtx.getImageData(0, 0, width, height).data);
-        state.undo = state.undo.filter((snapshot) => snapshot.length === width * height * 4);
+        if (state.lines && state.lines.length === current.width * current.height * 4) {
+          const lineSource = document.createElement("canvas");
+          lineSource.width = current.width; lineSource.height = current.height;
+          lineSource.getContext("2d").putImageData(new ImageData(state.lines, current.width, current.height), 0, 0);
+          const lineDest = document.createElement("canvas");
+          lineDest.width = width; lineDest.height = height;
+          const lineCtx = lineDest.getContext("2d");
+          lineCtx.imageSmoothingEnabled = false;
+          lineCtx.drawImage(lineSource, 0, 0, width, height);
+          nextLines = lineCtx.getImageData(0, 0, width, height).data;
+        }
+        state.undo = state.undo.filter((snapshot) => snapshot.paint && snapshot.paint.length === width * height * 4);
       }
       state.image = next;
+      state.lines = nextLines;
       undoButton.disabled = state.undo.length === 0;
+      syncLineCanvas();
       blit();
     }
     function chooseColor(next) {
       color = next;
-      brushTip.setAttribute("fill", next.hex);
+      document.querySelectorAll(".brush-color").forEach((part) => part.setAttribute("fill", next.hex));
       dot.style.background = next.hex;
       document.querySelectorAll(".swatch").forEach((button) => {
         button.setAttribute("aria-pressed", button.dataset.id === next.id ? "true" : "false");
@@ -358,10 +693,11 @@
       const show = touch || mobile || document.fullscreenElement === app;
       brush.style.opacity = show ? "1" : "0";
       if (!show) return;
-      brush.style.transform = "translate(" + (event.clientX - BRUSH_TIP_X) + "px," + (event.clientY - BRUSH_TIP_Y) + "px)";
+      const tip = brushTipOffset();
+      brush.style.transform = "translate(" + (event.clientX - tip.x) + "px," + (event.clientY - tip.y) + "px)";
     }
-    function hideTouchBrush(event) {
-      if (event.pointerType === "touch" || event.pointerType === "pen") brush.style.opacity = "0";
+    function keepTouchBrush(event) {
+      if (event.pointerType === "touch" || event.pointerType === "pen") placeBrush(event);
     }
     function moveDot(event) {
       if (document.fullscreenElement === app || event.pointerType === "touch" || event.pointerType === "pen" || mobile) {
@@ -377,12 +713,18 @@
       dot.style.background = color.hex;
       dot.style.transform = "translate(" + (event.clientX - rect.left - diameter / 2) + "px," + (event.clientY - rect.top - diameter / 2) + "px)";
     }
+    function restoreSnapshot(previous) {
+      if (!previous || !state.image || previous.paint.length !== state.image.data.length) return false;
+      state.image.data.set(previous.paint);
+      state.lines = previous.lines;
+      syncLineCanvas();
+      blit();
+      return true;
+    }
     function pointerDown(event) {
       if (event.button !== 0 || !state.image) return;
       canvas.setPointerCapture(event.pointerId);
-      state.undo.push(state.image.data.slice());
-      if (state.undo.length > MAX_UNDO) state.undo.shift();
-      undoButton.disabled = false;
+      remember();
       drawing = true;
       const point = toBuffer(event);
       lastPoint = point;
@@ -420,10 +762,68 @@
     function setFullscreenUi() {
       const on = document.fullscreenElement === app;
       app.classList.toggle("is-fullscreen", on);
-      fsButton.setAttribute("aria-label", on ? "전체 화면 나오기" : "전체 화면");
-      fsButton.innerHTML = on
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M21 8h-3a2 2 0 0 1-2-2V3"></path><path d="M3 16h3a2 2 0 0 1 2 2v3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>';
+    }
+    function blankPaper() {
+      if (!state.image) return;
+      remember();
+      fillBuffer(state.image.data);
+      state.lines = null;
+      syncLineCanvas();
+      blit();
+    }
+    function saveDrawing() {
+      if (!state.image) return;
+      const out = document.createElement("canvas");
+      out.width = state.image.width;
+      out.height = state.image.height;
+      const outCtx = out.getContext("2d");
+      outCtx.putImageData(state.image, 0, 0);
+      if (lineCanvas) outCtx.drawImage(lineCanvas, 0, 0);
+      out.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "색칠.png";
+        link.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    }
+    function toggleFullscreen() {
+      const request = document.fullscreenElement ? document.exitFullscreen() : app.requestFullscreen();
+      request.catch(() => {});
+    }
+    function applyTemplate(svg) {
+      const img = new Image();
+      img.onload = () => {
+        if (!state.image) return;
+        const width = state.image.width;
+        const height = state.image.height;
+        const board = document.createElement("canvas");
+        board.width = width;
+        board.height = height;
+        const ctx = board.getContext("2d");
+        const scale = Math.min(width / img.width, height / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        ctx.drawImage(img, (width - dw) / 2, (height - dh) / 2, dw, dh);
+        const drawn = ctx.getImageData(0, 0, width, height).data;
+        const lines = new Uint8ClampedArray(drawn.length);
+        for (let i = 0; i < drawn.length; i += 4) {
+          if (drawn[i + 3] === 0) continue;
+          lines[i] = drawn[i];
+          lines[i + 1] = drawn[i + 1];
+          lines[i + 2] = drawn[i + 2];
+          lines[i + 3] = drawn[i + 3];
+        }
+        remember();
+        fillBuffer(state.image.data);
+        state.lines = lines;
+        syncLineCanvas();
+        blit();
+        templateModal.hidden = true;
+      };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     }
 
     COLORS.forEach((item, index) => {
@@ -446,49 +846,106 @@
     canvas.addEventListener("contextmenu", (event) => event.preventDefault());
     app.addEventListener("pointerdown", placeBrush);
     app.addEventListener("pointermove", placeBrush);
-    app.addEventListener("pointerup", hideTouchBrush);
-    app.addEventListener("pointercancel", hideTouchBrush);
-    app.addEventListener("pointerleave", () => { brush.style.opacity = "0"; });
+    app.addEventListener("pointerup", keepTouchBrush);
+    app.addEventListener("pointercancel", keepTouchBrush);
+    app.addEventListener("pointerleave", (event) => {
+      if (event.pointerType === "touch" || event.pointerType === "pen" || mobile) return;
+      brush.style.opacity = "0";
+    });
     undoButton.addEventListener("click", () => {
       const previous = state.undo.pop();
-      if (!previous || !state.image || previous.length !== state.image.data.length) return;
-      state.image.data.set(previous);
+      if (!restoreSnapshot(previous)) return;
       undoButton.disabled = state.undo.length === 0;
-      blit();
     });
-    document.getElementById("clear").addEventListener("click", () => {
-      if (!state.image) return;
-      state.undo.push(state.image.data.slice());
-      if (state.undo.length > MAX_UNDO) state.undo.shift();
-      fillBuffer(state.image.data);
-      undoButton.disabled = false;
-      blit();
+    document.getElementById("brush-mode").addEventListener("click", () => {
+      thick = !thick;
+      syncBrushMode();
     });
-    document.getElementById("save").addEventListener("click", () => {
-      if (!state.image) return;
-      const out = document.createElement("canvas");
-      out.width = state.image.width;
-      out.height = state.image.height;
-      out.getContext("2d").putImageData(state.image, 0, 0);
-      out.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "색칠.png";
-        link.click();
-        URL.revokeObjectURL(url);
-      }, "image/png");
-    });
-    fsButton.addEventListener("click", async () => {
-      try {
-        if (document.fullscreenElement) await document.exitFullscreen();
-        else await app.requestFullscreen();
-        fsError.hidden = true;
-      } catch (error) {
-        fsError.hidden = false;
-        fsError.textContent = "전체 화면을 열지 못했어요. 버튼을 다시 눌러 주세요.";
+    let paperHoldTimer = 0;
+    let paperHoldFired = false;
+    let ignorePaperClick = false;
+    function stopPaperHold() {
+      if (paperHoldTimer) {
+        clearTimeout(paperHoldTimer);
+        paperHoldTimer = 0;
       }
+      newPaperButton.classList.remove("holding");
+    }
+    newPaperButton.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      paperHoldFired = false;
+      ignorePaperClick = false;
+      newPaperButton.setPointerCapture(event.pointerId);
+      newPaperButton.classList.add("holding");
+      paperHoldTimer = setTimeout(() => {
+        paperHoldTimer = 0;
+        paperHoldFired = true;
+        newPaperButton.classList.remove("holding");
+        saveDrawing();
+      }, 2000);
+    });
+    newPaperButton.addEventListener("pointerup", () => {
+      if (paperHoldFired) ignorePaperClick = true;
+      stopPaperHold();
+    });
+    newPaperButton.addEventListener("pointercancel", () => {
+      paperHoldFired = false;
+      stopPaperHold();
+    });
+    newPaperButton.addEventListener("click", () => {
+      if (ignorePaperClick) {
+        ignorePaperClick = false;
+        return;
+      }
+      blankPaper();
+    });
+    newPaperButton.addEventListener("contextmenu", (event) => event.preventDefault());
+    let templateHoldTimer = 0;
+    let templateHoldReady = false;
+    let ignoreTemplateClick = false;
+    templatesButton.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      templateHoldReady = false;
+      ignoreTemplateClick = false;
+      templatesButton.setPointerCapture(event.pointerId);
+      templatesButton.classList.add("holding");
+      templateHoldTimer = setTimeout(() => {
+        templateHoldTimer = 0;
+        templateHoldReady = true;
+        ignoreTemplateClick = true;
+        templatesButton.classList.remove("holding");
+        toggleFullscreen();
+      }, 2000);
+    });
+    templatesButton.addEventListener("pointerup", () => {
+      if (templateHoldTimer) {
+        clearTimeout(templateHoldTimer);
+        templateHoldTimer = 0;
+      }
+      templatesButton.classList.remove("holding");
+    });
+    templatesButton.addEventListener("pointercancel", () => {
+      if (templateHoldTimer) clearTimeout(templateHoldTimer);
+      templateHoldTimer = 0;
+      templateHoldReady = false;
+      templatesButton.classList.remove("holding");
+    });
+    templatesButton.addEventListener("click", () => {
+      if (ignoreTemplateClick) {
+        ignoreTemplateClick = false;
+        return;
+      }
+      templateModal.hidden = false;
+    });
+    templatesButton.addEventListener("contextmenu", (event) => event.preventDefault());
+    document.getElementById("template-grid").addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      applyTemplate(new XMLSerializer().serializeToString(button.querySelector("svg")));
+    });
+    document.getElementById("template-close").addEventListener("click", () => { templateModal.hidden = true; });
+    templateModal.addEventListener("click", (event) => {
+      if (event.target === templateModal) templateModal.hidden = true;
     });
     document.addEventListener("fullscreenchange", setFullscreenUi);
     window.addEventListener("keydown", (event) => {
@@ -496,11 +953,12 @@
       const digit = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
       if (digit) { event.preventDefault(); chooseColor(COLORS[Number(digit[1]) - 1]); }
       else if (event.code === "KeyZ") { event.preventDefault(); undoButton.click(); }
-      else if (event.code === "KeyF") { event.preventDefault(); fsButton.click(); }
+      else if (event.code === "KeyF") { event.preventDefault(); toggleFullscreen(); }
     });
     window.addEventListener("resize", updateLayout);
     matchMedia("(orientation: landscape)").addEventListener("change", updateLayout);
     new ResizeObserver(resizeToFrame).observe(frame);
+    syncBrushMode();
     updateLayout();
   </script>
 </body>
